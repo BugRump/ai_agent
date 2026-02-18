@@ -50,26 +50,3 @@ def run_python_file(working_directory, file_path, args=None):
     result = "".join(result_string_list)
 
     return result
-    
-
-
-
-    #subprocess.run(
-    # args, 
-    # *, 
-    # stdin=None, 
-    # input=None, 
-    # stdout=None, 
-    # stderr=None, 
-    # capture_output=False, 
-    # shell=False, 
-    # cwd=None, 
-    # timeout=None, 
-    # check=False, 
-    # encoding=None, 
-    # errors=None, 
-    # text=None, 
-    # env=None, 
-    # universal_newlines=None, 
-    # **other_popen_kwargs
-    # )
