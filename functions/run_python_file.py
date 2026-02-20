@@ -11,11 +11,15 @@ schema_run_python_file = types.FunctionDeclaration(
         properties={
             "file_path": types.Schema(
                 type=types.Type.STRING,
-                description="File path to execute python files from, relative to the working directory",
+                description="a file path relative to the working directory of the python file to be executed. (Must be a .py file and must be within the working directory or its subdirectories)",
             ),
             "args": types.Schema(
-                type=types.Type.STRING,
-                description="Optional arguments that may be added to a function call within a python file. For example, the following argument can be passed into a calculator function in order to produce a sum: ['3 + 5']. (Defaults to None when no argument is passed)"
+                type=types.Type.ARRAY,
+                description="An array of arguments to be passed into a function call within a python file. (Defaults to None when no argument is passed)",
+                items=types.Schema(
+                    type=types.Type.STRING,
+                    description="Argument to be passed into a function call within a python file. (Must be passed in as an array, even if only passing in one argument)"
+                ),
             )
         },
     ),

@@ -1,4 +1,24 @@
 import os
+from google import genai
+from google.genai import types
+
+schema_write_file = types.FunctionDeclaration(
+    name="write_file",
+    description="writes a provided string into a targeted file relative to the working directory, creating necessary file and directory branches if they do not already exist.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="path to the intended file, relative to the working directory.",
+            ),
+            "content": types.Schema(
+                type=types.Type.STRING,
+                description="a string that will be written into the targeted file.",
+            ),
+        },
+    ),
+)
 
 def write_file(working_directory, file_path, content):
     working_dir_abs = os.path.abspath(working_directory)
