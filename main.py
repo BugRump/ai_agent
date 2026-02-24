@@ -1,5 +1,6 @@
 import os
 import argparse
+from pyexpat.errors import messages
 import sys
 from dotenv import load_dotenv
 from google import genai
@@ -26,40 +27,64 @@ def main():
 
     messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
 
-    response = client.models.generate_content(
+    for i in range(20):
+        # Generate content based on the user prompt and any function calls
+        # add in the function results from the previous iteration to the messages
+        # maintain full message history for context, allowing the model to reference previous function calls and responses
+        # avoid reusing the initial user prompt in subsequent iterations        
+        response = client.models.generate_content(
         model="gemini-2.5-flash", 
         contents=messages,
         config=types.GenerateContentConfig(tools=[available_functions],
                                            system_instruction=system_prompt),
         )
     
-    if response.usage_metadata == None:
-        raise RuntimeError("Failed API request.")
+        if response.usage_metadata == None:
+            raise RuntimeError("Failed API request.")
     
-    x = response.usage_metadata.prompt_token_count
-    y = response.usage_metadata.candidates_token_count
+        x = response.usage_metadata.prompt_token_count
+        y = response.usage_metadata.candidates_token_count
     
-    if args.verbose == True:
-        print(f"User prompt: {args.user_prompt}")
-        print(f"Prompt tokens: {x}")
-        print(f"Response tokens: {y}")
+        if args.verbose == True:
+            print(f"User prompt: {args.user_prompt}")
+            print(f"Prompt tokens: {x}")
+            print(f"Response tokens: {y}")
 
-    function_results = []
+        try:
+            for x in response.candidates:
+                messages.append(x.content)
+        except Exception as e:
+            print(f"Error processing response candidates: {e}")
+            continue
         
-    if response.function_calls != None:
-        for function_call in response.function_calls:
-            function_response = call_function(function_call, verbose=args.verbose)
-            if len(function_response.parts) == 0:
-                raise Exception("Function response is empty.")
-            elif function_response.parts[0].function_response == None:
-                raise Exception("Function response is None.")
-            elif function_response.parts[0].function_response.response == None:
-                raise Exception("Function response content is None.")
-            function_results.append(function_response.parts[0])
-            if args.verbose:
-                print(f"-> {function_response.parts[0].function_response.response}")
-    else:
-        print(f"Response:\n {response.text}")
+        function_results = []
+
+        if response.function_calls != None:
+            for function_call in response.function_calls:
+                function_response = call_function(function_call, verbose=args.verbose)
+                if len(function_response.parts) == 0:
+                    raise Exception("Function response is empty.")
+                elif function_response.parts[0].function_response == None:
+                    raise Exception("Function response is None.")
+                elif function_response.parts[0].function_response.response == None:
+                    raise Exception("Function response content is None.")
+                function_results.append(function_response.parts[0])
+                
+                if args.verbose:
+                    print(f"-> {function_response.parts[0].function_response.response}")
+        else:
+            print(f"Response:\n {response.text}")
+            break
+        
+        messages.append(types.Content(role="user", parts=function_results))
+
+        function_results = []  # Reset function results for next iteration
+
+        # if the end of the range is reached without a break, print the final response and exit with a code of 1 to indicate that the conversation did not reach a natural conclusion within the expected number of iterations
+        if i == 19 and response.function_calls != None:
+            print(f"Final response:\n {response.text}")
+            print("Reached maximum iterations without a natural conclusion.")
+            sys.exit(1)
 
 if __name__ == "__main__":
     main()
