@@ -1,6 +1,5 @@
 import os
 import argparse
-from pyexpat.errors import messages
 import sys
 from dotenv import load_dotenv
 from google import genai
@@ -27,11 +26,7 @@ def main():
 
     messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
 
-    for i in range(20):
-        # Generate content based on the user prompt and any function calls
-        # add in the function results from the previous iteration to the messages
-        # maintain full message history for context, allowing the model to reference previous function calls and responses
-        # avoid reusing the initial user prompt in subsequent iterations        
+    for i in range(20):       
         response = client.models.generate_content(
         model="gemini-2.5-flash", 
         contents=messages,
